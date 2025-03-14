@@ -1,2 +1,2 @@
 # 3dcuberunner
-3d cube runner game built with websim
+3d cube runner game built with websim and chatgpt
