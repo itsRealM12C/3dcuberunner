@@ -99,9 +99,9 @@
         function init() {
             scene = new THREE.Scene();
             
-            const loader = new THREE.CubeTextureLoader();
-            const skyboxTexture = new THREE.Color(0x87CEEB); 
-            scene.background = skyboxTexture;
+           const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.style.backgroundColor = "#000"; // Set black background for canvas
 
             for(var i = 0; i < 20; i++) {
                 const cloudGeometry = new THREE.SphereGeometry(2, 16, 16);
