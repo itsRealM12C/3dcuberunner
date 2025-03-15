@@ -5,6 +5,22 @@
     <title>3D Runner Game</title>
     <meta charset="utf-8">
 
+    <script>
+        function isMobile() {
+            return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        }
+
+        function checkDeviceAndRedirect() {
+            if (isMobile()) {
+                // Redirect mobile users to https://itsrealm12c.github.io/3dcuberunner/mobe.html
+                window.location.href = "https://itsrealm12c.github.io/3dcuberunner/mobe.html"; // Change to your desired URL
+            }
+        }
+
+        // Call the function to check device type and possibly redirect
+        checkDeviceAndRedirect();
+    </script>
+    
      <script>
         function getBrowserVersion() {
             const userAgent = navigator.userAgent;
