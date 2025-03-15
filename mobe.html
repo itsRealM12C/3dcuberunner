@@ -1,0 +1,811 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html>
+<head>
+    <title>3D Runner Game</title>
+    <meta charset="utf-8">
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #score {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            z-index: 100;
+        }
+        #gameOver {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.75);
+            z-index: 100;
+            flex-direction: column;
+            font-family: sans-serif;
+            font-size: 48px;
+            color: white;
+        }
+        #gameOver button {
+            padding: 15px 30px;
+            font-size: 24px;
+            margin-top: 20px;
+            cursor: pointer;
+            background: #ffa11f; /* Old browsers */
+            background: -moz-linear-gradient(left,  #ffa11f 0%, #f13c00 50%, #ff0000 51%, #ff008a 100%); /* FF3.6-15 */
+            background: -webkit-linear-gradient(left,  #ffa11f 0%,#f13c00 50%,#ff0000 51%,#ff008a 100%); /* Chrome10-25,Safari5.1-6 */
+            background: linear-gradient(to right,  #ffa11f 0%,#f13c00 50%,#ff0000 51%,#ff008a 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffa11f', endColorstr='#ff008a',GradientType=1 ); /* IE6-9 */
+
+            border: none;
+            border-radius: 25px;
+            color: white;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        #gameOver button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+            background: linear-gradient(to right, #f13c00 0%, #ff0000 50%, #ff008a 51%, #ffa11f 100%);
+        }
+
+        #gameOver button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        #preview {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            border: 2px solid white;
+            z-index: 100;
+        }
+        #timer {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            z-index: 100;
+            display: none;
+        }
+        #mobileControls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: none;
+            z-index: 200;
+        }
+        #mobileControls #jumpContainer {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+        }
+        #mobileControls #moveContainer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .control-btn:active {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(0.95);
+        }
+
+        .control-btn svg {
+            width: 30px;
+            height: 30px;
+            fill: white;
+        }
+
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: block;
+            }
+        }
+        #invincibleTimer {
+            position: fixed;
+            bottom: 50px;
+            left: 20px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            z-index: 100;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <div id="gameOver">
+        Game Over!
+        <br>
+        <button onclick="restartGame()">Restart</button>
+    </div>
+    <div id="preview"></div>
+    <div id="timer">Quadruple Jump: 10s</div>
+    <div id="invincibleTimer">Invincible: 10s</div>
+    <div id="mobileControls">
+        <div id="jumpContainer">
+            <div class="control-btn" id="jumpBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 4l-8 8h6v8h4v-8h6z"/>
+                </svg>
+            </div>
+        </div>
+        <div id="moveContainer">
+            <div class="control-btn" id="leftBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M15 6l-6 6 6 6"/>
+                </svg>
+            </div>
+            <div class="control-btn" id="rightBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M9 6l6 6-6 6"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+
+        let scene, camera, renderer, player;
+        let obstacles = [];
+        let platforms = [];
+        let blueBlocks = [];  
+        let yellowBlocks = [];  
+        let orangeBlocks = [];  
+        let purpleBlocks = [];  
+        let gameSpeed = 0.2;
+        let score = 0;
+        let isGameOver = false;
+        let playerVelocity = 0;
+        let isJumping = false;
+        let moveLeft = false;
+        let moveRight = false;
+        let maxJumps = 1;      
+        let jumpCount = 0;     
+        const MOVEMENT_SPEED = 0.15;
+        const PLATFORM_WIDTH = 5;
+        let previewCamera, previewRenderer;
+        let previewPlayer;
+        let powerUpTimer = null;
+        let remainingTime = 10;
+        let grayBlocks = [];
+        let isInvincible = false;
+        let invincibleTimer = null;
+        let invincibleTimeRemaining = 10;
+
+        function init() {
+            scene = new THREE.Scene();
+            
+            const loader = new THREE.CubeTextureLoader();
+            const skyboxTexture = new THREE.Color(0x87CEEB); 
+            scene.background = skyboxTexture;
+
+            for(let i = 0; i < 20; i++) {
+                const cloudGeometry = new THREE.SphereGeometry(2, 16, 16);
+                const cloudMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+                cloud.position.set(
+                    (Math.random() - 0.5) * 100,
+                    20 + (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 100
+                );
+                cloud.scale.set(1, 0.3, 1);
+                scene.add(cloud);
+            }
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 20, 0);
+            scene.add(directionalLight);
+
+            const playerGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const playerMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+            player = new THREE.Mesh(playerGeometry, playerMaterial);
+            player.position.set(0, 1, 0);
+            scene.add(player);
+
+            const previewGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const previewMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+            previewPlayer = new THREE.Mesh(previewGeometry, previewMaterial);
+            previewPlayer.position.copy(player.position);
+            scene.add(previewPlayer);
+
+            camera.position.set(0, 3, 7);
+            camera.lookAt(player.position);
+
+            createInitialPlatforms();
+            
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+            
+            // Setup preview
+            previewCamera = new THREE.OrthographicCamera(
+                -5, 5,
+                3.75, -3.75,
+                0.1, 1000
+            );
+            previewCamera.position.set(0, 10, 0);
+            previewCamera.lookAt(0, 0, 0);
+            previewCamera.rotation.z = Math.PI;
+
+            previewRenderer = new THREE.WebGLRenderer();
+            previewRenderer.setSize(200, 150);
+            const previewContainer = document.getElementById('preview');
+            previewContainer.appendChild(previewRenderer.domElement);
+
+            addMobileControls();
+
+            animate();
+        }
+
+        function addMobileControls() {
+            const jumpBtn = document.getElementById('jumpBtn');
+            const leftBtn = document.getElementById('leftBtn');
+            const rightBtn = document.getElementById('rightBtn');
+            
+            jumpBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (!isGameOver && jumpCount < maxJumps) {
+                    playerVelocity = 0.2;
+                    isJumping = true;
+                    jumpCount++;
+                    previewPlayer.scale.set(1.2, 0.8, 1.2); 
+                    setTimeout(() => {
+                        previewPlayer.scale.set(0.8, 1.2, 0.8); 
+                    }, 100);
+                }
+            }, { passive: true });
+
+            jumpBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (!isGameOver && jumpCount < maxJumps) {
+                    playerVelocity = 0.2;
+                    isJumping = true;
+                    jumpCount++;
+                    previewPlayer.scale.set(1.2, 0.8, 1.2); 
+                    setTimeout(() => {
+                        previewPlayer.scale.set(0.8, 1.2, 0.8); 
+                    }, 100);
+                }
+            });
+
+            function handleLeftStart(e) {
+                e.preventDefault();
+                moveLeft = true;
+            }
+            function handleRightStart(e) {
+                e.preventDefault();
+                moveRight = true;
+            }
+            function handleDirectionEnd(e) {
+                e.preventDefault();
+                moveLeft = false;
+                moveRight = false;
+            }
+            leftBtn.addEventListener('touchstart', handleLeftStart, { passive: true });
+            leftBtn.addEventListener('mousedown', handleLeftStart);
+            leftBtn.addEventListener('touchend', handleDirectionEnd, { passive: true });
+            leftBtn.addEventListener('mouseup', handleDirectionEnd);
+            rightBtn.addEventListener('touchstart', handleRightStart, { passive: true });
+            rightBtn.addEventListener('mousedown', handleRightStart);
+            rightBtn.addEventListener('touchend', handleDirectionEnd, { passive: true });
+            rightBtn.addEventListener('mouseup', handleDirectionEnd);
+        }
+
+        function createInitialPlatforms() {
+            for (let i = 0; i < 5; i++) {
+                createPlatform(-20 * i);
+            }
+        }
+
+        function createPlatform(zPosition) {
+            const platformGeometry = new THREE.BoxGeometry(5, 0.5, 20);
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const context = canvas.getContext('2d');
+
+            const tileSize = 32;
+            for (let x = 0; x < canvas.width; x += tileSize) {
+                for (let y = 0; y < canvas.height; y += tileSize) {
+                    context.fillStyle = ((x + y) / tileSize) % 2 === 0 ? '#808080' : '#606060';
+                    context.fillRect(x, y, tileSize, tileSize);
+
+                    context.fillStyle = 'rgba(0,0,0,0.1)';
+                    for (let i = 0; i < 5; i++) {
+                        context.fillRect(
+                            x + Math.random() * tileSize,
+                            y + Math.random() * tileSize,
+                            2,
+                            2
+                        );
+                    }
+                }
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(2, 8);
+
+            const platformMaterial = new THREE.MeshPhongMaterial({ 
+                map: texture,
+                bumpMap: texture,
+                bumpScale: 0.05
+            });
+
+            const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+            platform.position.set(0, -0.25, zPosition);
+            scene.add(platform);
+            platforms.push(platform);
+
+            if (Math.random() > 0.3) {
+                const spikeGeometry = new THREE.ConeGeometry(0.5, 1.5, 4);
+                const spikeMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x303030,
+                    shininess: 100,
+                    specular: 0x666666
+                });
+                const spike = new THREE.Mesh(spikeGeometry, spikeMaterial);
+                spike.position.set(
+                    (Math.random() - 0.5) * 3,
+                    0.75, 
+                    zPosition + (Math.random() - 0.5) * 8
+                );
+                
+                // Only add obstacles if they're not too close to the starting position
+                if (spike.position.z < -5) {
+                    scene.add(spike);
+                    obstacles.push(spike);
+                }
+                
+                if (Math.random() > 0.7) {
+                    const yellowGeometry = new THREE.BoxGeometry(1, 1, 1);
+                    const yellowMaterial = new THREE.MeshPhongMaterial({ color: 0xffff00 });
+                    const yellowBlock = new THREE.Mesh(yellowGeometry, yellowMaterial);
+                    yellowBlock.position.set(
+                        (Math.random() - 0.5) * 3,
+                        2,
+                        zPosition + (Math.random() - 0.5) * 8
+                    );
+                    scene.add(yellowBlock);
+                    yellowBlocks.push(yellowBlock);
+                }
+
+                if (Math.random() > 0.5) {
+                    createBlueBlock(zPosition);
+                }
+
+                if (Math.random() > 0.6) {  
+                    createOrangeBlock(zPosition);
+                }
+
+                if (Math.random() > 0.8) {  
+                    createPurpleBlock(zPosition);
+                }
+
+                if (Math.random() > 0.8) {
+                    createGrayBlock(zPosition);
+                }
+            }
+        }
+
+        function createBlueBlock(zPosition) {
+            const blueGeometry = new THREE.BoxGeometry(2, 0.5, 2);
+            const blueMaterial = new THREE.MeshPhongMaterial({ color: 0x0000ff });
+            const blueBlock = new THREE.Mesh(blueGeometry, blueMaterial);
+            const randomY = Math.random() * 2 + 2; 
+            blueBlock.position.set(
+                (Math.random() - 0.5) * 3,
+                randomY,
+                zPosition + (Math.random() - 0.5) * 8
+            );
+            scene.add(blueBlock);
+            blueBlocks.push(blueBlock);
+        }
+
+        function createOrangeBlock(zPosition) {
+            const orangeGeometry = new THREE.BoxGeometry(2, 0.5, 2);
+            const orangeMaterial = new THREE.MeshPhongMaterial({ color: 0xff8c00 });
+            const orangeBlock = new THREE.Mesh(orangeGeometry, orangeMaterial);
+            const randomY = Math.random() * 2 + 1.5; 
+            orangeBlock.position.set(
+                (Math.random() - 0.5) * 3,
+                randomY,
+                zPosition + (Math.random() - 0.5) * 8
+            );
+            scene.add(orangeBlock);
+            orangeBlocks.push(orangeBlock);
+        }
+
+        function createPurpleBlock(zPosition) {
+            const purpleGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const purpleMaterial = new THREE.MeshPhongMaterial({ color: 0x800080 });
+            const purpleBlock = new THREE.Mesh(purpleGeometry, purpleMaterial);
+            purpleBlock.position.set(
+                (Math.random() - 0.5) * 3,
+                2,
+                zPosition + (Math.random() - 0.5) * 8
+            );
+            scene.add(purpleBlock);
+            purpleBlocks.push(purpleBlock);
+        }
+
+        function createGrayBlock(zPosition) {
+            const grayGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const grayMaterial = new THREE.MeshPhongMaterial({ color: 0x808080 });
+            const grayBlock = new THREE.Mesh(grayGeometry, grayMaterial);
+            grayBlock.position.set(
+                (Math.random() - 0.5) * 3,
+                2,
+                zPosition + (Math.random() - 0.5) * 8
+            );
+            scene.add(grayBlock);
+            grayBlocks.push(grayBlock);
+        }
+
+        function createYellowBlock(zPosition) {
+            const yellowGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const yellowMaterial = new THREE.MeshPhongMaterial({ color: 0xffff00 });
+            const yellowBlock = new THREE.Mesh(yellowGeometry, yellowMaterial);
+            yellowBlock.position.set(
+                (Math.random() - 0.5) * 3,
+                2,
+                zPosition + (Math.random() - 0.5) * 8
+            );
+            scene.add(yellowBlock);
+            yellowBlocks.push(yellowBlock);
+        }
+
+        function updateGame() {
+            if (isGameOver) {
+                previewPlayer.position.copy(player.position);
+                player.position.y = 1;  
+                playerVelocity = 0;
+                moveLeft = false;
+                moveRight = false;
+                return;  
+            }
+
+            previewPlayer.position.copy(player.position);
+
+            if (moveLeft && player.position.x > -(PLATFORM_WIDTH/2 - 0.5)) {
+                player.position.x -= MOVEMENT_SPEED;
+            }
+            if (moveRight && player.position.x < (PLATFORM_WIDTH/2 - 0.5)) {
+                player.position.x += MOVEMENT_SPEED;
+            }
+
+            if (isJumping) {
+                player.position.y += playerVelocity;
+                playerVelocity -= 0.00375; 
+
+                if (player.position.y <= 1) {
+                    player.position.y = 1;
+                    isJumping = false;
+                    playerVelocity = 0;
+                    previewPlayer.scale.set(1.2, 0.8, 1.2); 
+                    setTimeout(() => {
+                        previewPlayer.scale.set(1, 1, 1); 
+                    }, 100);
+                }
+            }
+
+            if (player.position.y <= 1) {
+                player.position.y = 1;
+                isJumping = false;
+                playerVelocity = 0;
+                jumpCount = 0; 
+                previewPlayer.scale.set(1, 1, 1); 
+            }
+
+            platforms.forEach((platform, index) => {
+                platform.position.z += gameSpeed;
+                if (platform.position.z > 20) {
+                    scene.remove(platform);
+                    platforms.splice(index, 1);
+                    createPlatform(-80);
+                }
+            });
+
+            obstacles.forEach((obstacle, index) => {
+                obstacle.position.z += gameSpeed;
+                if (obstacle.position.z > 20) {
+                    scene.remove(obstacle);
+                    obstacles.splice(index, 1);
+                }
+            });
+
+            blueBlocks.forEach((block, index) => {
+                block.position.z += gameSpeed;
+                if (block.position.z > 20) {
+                    scene.remove(block);
+                    blueBlocks.splice(index, 1);
+                }
+            });
+
+            yellowBlocks.forEach((block, index) => {
+                block.position.z += gameSpeed;
+                if (block.position.z > 20) {
+                    scene.remove(block);
+                    yellowBlocks.splice(index, 1);
+                }
+                if (checkCollision(player, block)) {
+                    scene.remove(block);
+                    yellowBlocks.splice(index, 1);
+                    for (let i = 0; i < 3; i++) {
+                        createBlueBlock(block.position.z - 20 - (i * 5));
+                    }
+                }
+            });
+
+            orangeBlocks.forEach((block, index) => {
+                block.position.z += gameSpeed;
+                if (block.position.z > 20) {
+                    scene.remove(block);
+                    orangeBlocks.splice(index, 1);
+                }
+                if (checkBlockCollision(player, block)) {
+                    playerVelocity = 0.4; 
+                    isJumping = true;
+                }
+            });
+
+            purpleBlocks.forEach((block, index) => {
+                block.position.z += gameSpeed;
+                if (block.position.z > 20) {
+                    scene.remove(block);
+                    purpleBlocks.splice(index, 1);
+                }
+                if (checkCollision(player, block)) {
+                    scene.remove(block);
+                    purpleBlocks.splice(index, 1);
+                    maxJumps = 4;  
+                    jumpCount = 0; 
+                    remainingTime = 10;
+                    document.getElementById('timer').style.display = 'block';
+                    if (powerUpTimer) clearInterval(powerUpTimer);
+                    powerUpTimer = setInterval(updateTimer, 1000);
+                }
+            });
+
+            grayBlocks.forEach((block, index) => {
+                block.position.z += gameSpeed;
+                if (block.position.z > 20) {
+                    scene.remove(block);
+                    grayBlocks.splice(index, 1);
+                }
+                if (checkCollision(player, block)) {
+                    scene.remove(block);
+                    grayBlocks.splice(index, 1);
+                    for (let i = 0; i < 2; i++) {
+                        createOrangeBlock(block.position.z - 20 - (i * 5));
+                        createYellowBlock(block.position.z - 20 - (i * 5));
+                        createPurpleBlock(block.position.z - 20 - (i * 5));
+                    }
+                    isInvincible = true;
+                    invincibleTimeRemaining = 10;
+                    document.getElementById('invincibleTimer').style.display = 'block';
+                    if (invincibleTimer) clearInterval(invincibleTimer);
+                    invincibleTimer = setInterval(updateInvincibleTimer, 1000);
+                }
+            });
+
+            let isOnBlueBlock = false;
+            blueBlocks.forEach(block => {
+                if (checkBlockCollision(player, block)) {
+                    isOnBlueBlock = true;
+                    player.position.y = block.position.y + 0.75;
+                    isJumping = false;
+                    playerVelocity = 0;
+                }
+            });
+
+            if (!isOnBlueBlock && !isJumping && player.position.y > 1) {
+                isJumping = true;
+                playerVelocity = 0;
+            }
+
+            obstacles.forEach(obstacle => {
+                if (checkCollision(player, obstacle) && !isInvincible) {
+                    gameOver();
+                }
+            });
+
+            score += gameSpeed;
+            document.getElementById('score').textContent = `Score: ${Math.floor(score)}`;
+            
+            gameSpeed += 0.0001;
+        }
+
+        function checkCollision(obj1, obj2) {
+            const dx = obj1.position.x - obj2.position.x;
+            const dy = obj1.position.y - obj2.position.y;
+            const dz = obj1.position.z - obj2.position.z;
+            const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            return distance < 1.2;  
+        }
+
+        function checkBlockCollision(player, block) {
+            const dx = Math.abs(player.position.x - block.position.x);
+            const dy = player.position.y - block.position.y;
+            const dz = Math.abs(player.position.z - block.position.z);
+            
+            return dx < 1.5 && dy < 1 && dy > 0 && dz < 1.5 && player.position.y > block.position.y;
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            moveLeft = false;
+            moveRight = false;
+            isJumping = false;
+            playerVelocity = 0;
+            player.position.y = 1;  
+            document.getElementById('gameOver').style.display = 'flex';
+        }
+
+        function updateTimer() {
+            const timerElement = document.getElementById('timer');
+            remainingTime--;
+            if (remainingTime >= 0) {
+                timerElement.textContent = `Quadruple Jump: ${remainingTime}s`;
+            } else {
+                timerElement.style.display = 'none';
+                maxJumps = 1;  
+                jumpCount = 0; 
+                clearInterval(powerUpTimer);
+            }
+        }
+
+        function updateInvincibleTimer() {
+            const invincibleTimerElement = document.getElementById('invincibleTimer');
+            invincibleTimeRemaining--;
+            if (invincibleTimeRemaining >= 0) {
+                invincibleTimerElement.textContent = `Invincible: ${invincibleTimeRemaining}s`;
+                player.material.color.set(0xffa500);
+            } else {
+                isInvincible = false;
+                invincibleTimerElement.style.display = 'none';
+                clearInterval(invincibleTimer);
+                player.material.color.set(0x00ff00);
+            }
+        }
+
+        function restartGame() {
+            if (powerUpTimer) {
+                clearInterval(powerUpTimer);
+            }
+            yellowBlocks.forEach(block => scene.remove(block));
+            yellowBlocks = [];
+            blueBlocks.forEach(block => scene.remove(block));
+            blueBlocks = [];
+            orangeBlocks.forEach(block => scene.remove(block)); 
+            orangeBlocks = [];
+            purpleBlocks.forEach(block => scene.remove(block));
+            purpleBlocks = [];
+            grayBlocks.forEach(block => scene.remove(block));
+            grayBlocks = [];
+            scene.remove(previewPlayer);
+            maxJumps = 1;
+            jumpCount = 0;
+            document.getElementById('gameOver').style.display = 'none'; // Hide game over screen
+            location.reload();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updateGame();
+            renderer.render(scene, camera);
+            
+            previewRenderer.render(scene, previewCamera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            const aspect = 200 / 150;
+            previewCamera.left = -5;
+            previewCamera.right = 5;
+            previewCamera.top = 5 / aspect;
+            previewCamera.bottom = -5 / aspect;
+            previewCamera.updateProjectionMatrix();
+            previewRenderer.setSize(200, 150);
+        });
+
+        window.restartGame = restartGame;
+
+        init();
+
+        function onKeyDown(event) {
+            switch(event.key) {
+                case 'ArrowLeft':
+                    moveLeft = true;
+                    break;
+                case 'ArrowRight':
+                    moveRight = true;
+                    break;
+                case ' ':
+                    if (!isGameOver && jumpCount < maxJumps) {
+                        playerVelocity = 0.2;
+                        isJumping = true;
+                        jumpCount++;
+                        previewPlayer.scale.set(1.2, 0.8, 1.2);
+                        setTimeout(() => {
+                            previewPlayer.scale.set(0.8, 1.2, 0.8);
+                        }, 100);
+                    }
+                    break;
+            }
+        }
+
+        function onKeyUp(event) {
+            switch(event.key) {
+                case 'ArrowLeft':
+                    moveLeft = false;
+                    break;
+                case 'ArrowRight':
+                    moveRight = false;
+                    break;
+            }
+        }
+
+        // Check if the device is a mobile device
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        // If the device is not a mobile device, hide the mobile controls
+        if (!isMobileDevice()) {
+            document.getElementById('mobileControls').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
