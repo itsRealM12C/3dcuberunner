@@ -21,53 +21,7 @@
         checkDeviceAndRedirect();
     </script>
     
-     <script>
-        function getBrowserVersion() {
-            const userAgent = navigator.userAgent;
-            let browserName, fullVersion;
-
-            // Check for Chrome
-            if (userAgent.indexOf("Chrome") > -1) {
-                browserName = "Chrome";
-                fullVersion = userAgent.match(/Chrome\/(\d+)/)[1];
-            }
-            // Check for Firefox
-            else if (userAgent.indexOf("Firefox") > -1) {
-                browserName = "Firefox";
-                fullVersion = userAgent.match(/Firefox\/(\d+)/)[1];
-            }
-            // Check for Safari
-            else if (userAgent.indexOf("Safari") > -1 && userAgent.indexOf("Chrome") == -1) {
-                browserName = "Safari";
-                fullVersion = userAgent.match(/Version\/(\d+)/)[1];
-            }
-            // Check for Edge
-            else if (userAgent.indexOf("Edg") > -1) {
-                browserName = "Edge";
-                fullVersion = userAgent.match(/Edg\/(\d+)/)[1];
-            }
-            // Check for Internet Explorer
-            else if (userAgent.indexOf("MSIE") > -1 || userAgent.indexOf("Trident") > -1) {
-                browserName = "Internet Explorer";
-                fullVersion = userAgent.match(/(?:MSIE |rv:)(\d+)/)[1];
-            }
-
-            return { browserName, fullVersion };
-        }
-
-        function checkBrowserVersion() {
-            const { browserName, fullVersion } = getBrowserVersion();
-
-            // Check if the browser is Chrome and version is less than 80
-            if (browserName === "Chrome" && parseInt(fullVersion) < 80) {
-                // Redirect to a different website if the browser is older than Chrome 80
-                window.location.href = "https://itsrealm12c.github.io/3dcuberunner/old"; // Change this URL to where you want to redirect
-            }
-        }
-
-        // Call the function to check the browser version and possibly redirect
-        checkBrowserVersion();
-    </script>
+   
     
     <style>
         body { margin: 0; overflow: hidden; }
