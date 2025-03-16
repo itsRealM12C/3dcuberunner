@@ -807,6 +807,27 @@
         if (!isMobileDevice()) {
             document.getElementById('mobileControls').style.display = 'none';
         }
+        
+        // Ensure the canvas and WebGL context are working
+window.onload = function () {
+    let canvas = document.querySelector("canvas");
+
+    if (!canvas) {
+        console.error("Canvas element not found!");
+        return;
+    }
+
+    let gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    
+    if (!gl) {
+        console.error("WebGL is not supported in this browser!");
+        alert("WebGL is not supported or disabled in your browser. Please update or enable it.");
+        return;
+    }
+
+    console.log("WebGL loaded successfully!");
+};
+
     </script>
 </body>
 </html>
